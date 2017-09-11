@@ -45,6 +45,11 @@ object BlobTupleIterator {
   * Iterator over a OSM file in pbf format.
   * Each item is a tuple of BlobHeader and Blob
   *
+  * Assume that the pbf file is a secuence of three element in this order:
+  * 1. Size of the next BlobHeader
+  * 2. BlobHeader, with the size of the next blob.
+  * 3. Blob.
+  *
   * @param pbfInputStream Input stream that will be used to read the fileblock
   * @author angelcervera
   */
@@ -61,19 +66,44 @@ class BlobTupleIterator(pbfInputStream: InputStream) extends Iterator[(BlobHeade
 
   override def hasNext: Boolean = nextBlockLength.isDefined
 
-  override def next(): (BlobHeader, Blob) = {
-
-    // Reading header.
-    val bufferBlobHeader = new Array[Byte](nextBlockLength.get)
+  /**
+    * Takes the next "length" bytes from the stream and parsers it as a BlobHeader
+    *
+    * @param length size of the next BlobHeader
+    * @param is Stream with the data
+    * @return New BlobHeader
+    */
+  private def readNextHeader(length: Int, is: DataInputStream) : BlobHeader = {
+    // Fill the buffer with data from "is".
+    val bufferBlobHeader = new Array[Byte](length)
     pbfStream.readFully(bufferBlobHeader)
 
-    // Parsing pbf header.
-    val blobHeader = BlobHeader parseFrom bufferBlobHeader
+    // Parsing header.
+    BlobHeader parseFrom bufferBlobHeader
+  }
 
-    // Read the next block
-    val bufferBlob = new Array[Byte](blobHeader.datasize)
+  /**
+    * Takes the next "length" bytes from the stream and parsers it as a Blob
+    *
+    * @param length size of the next Blob
+    * @param is Stream with the data
+    * @return New Blob
+    */
+  private def readNextData(length: Int, is: DataInputStream) : Blob = {
+    // Fill the buffer with data from "is".
+    val bufferBlob = new Array[Byte](length)
     pbfStream.readFully(bufferBlob)
-    val blob = Blob parseFrom bufferBlob
+
+    // Parsing the blob.
+    Blob parseFrom bufferBlob
+  }
+
+  override def next(): (BlobHeader, Blob) = {
+
+    val blobHeader = readNextHeader(nextBlockLength.get, pbfStream)
+
+    // Parsing the blob
+    val blob = readNextData(blobHeader.datasize, pbfStream)
 
     // Move to the next pair.
     readNextBlockLength
