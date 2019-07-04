@@ -57,14 +57,18 @@ class DenseNodesIterator(osmosisStringTable: StringTable, osmosisDenseNode: Dens
 
   var lastNode: NodeEntity = NodeEntity(0, 0, 0, Map())
 
-  override def hasNext: Boolean = idIterator hasNext
+  override def hasNext: Boolean = idIterator.hasNext
 
   override def next(): NodeEntity = {
 
     val id = idIterator.next() + lastNode.id
     val latitude = decompressCoord(latOffset, latIterator.next(), lastNode.latitude)
     val longitude = decompressCoord(lonOffset, lonIterator.next(), lastNode.longitude)
-    val tags = tagsIterator takeWhile( _ != 0l) grouped(2) map {(tag) => osmosisStringTable.s(tag.head).toString("UTF-8") -> osmosisStringTable.s(tag.last).toString("UTF-8")} toMap
+    val tags = tagsIterator
+      .takeWhile( _ != 0l)
+      .grouped(2)
+      .map {(tag) => osmosisStringTable.s(tag.head).toString("UTF-8") -> osmosisStringTable.s(tag.last).toString("UTF-8")}
+      .toMap
 
     // Create node
     lastNode = NodeEntity(id, latitude, longitude, tags)

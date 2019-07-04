@@ -61,7 +61,7 @@ class FromPbfFileEntitiesIterator(pbfInputStream: InputStream) extends EntityIte
     */
   private def readNextBlock() = {
 
-    if(blobIterator hasNext) {
+    if(blobIterator.hasNext) {
       Some( EntityIterator.fromBlob( blobIterator.next._2 ) )
     } else {
       None

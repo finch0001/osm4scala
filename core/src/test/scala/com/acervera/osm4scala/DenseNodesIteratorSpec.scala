@@ -44,11 +44,19 @@ class DenseNodesIteratorSpec extends WordSpec with Matchers {
     }
 
     "Decode location" in {
-      val strTable = StringTable parseFrom new FileInputStream("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/strTable")
-      val osmosisDense = DenseNodes parseFrom new FileInputStream("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/0.dense")
-      val expectedCoordIter = Source fromFile new File("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/nodes_coord_list.txt") getLines()
+
+      val strTable = StringTable
+        .parseFrom(new FileInputStream("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/strTable"))
+
+      val osmosisDense = DenseNodes
+        .parseFrom(new FileInputStream("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/0.dense"))
+
+      val expectedCoordIter = Source
+          .fromFile(new File("core/src/test/resources/com/acervera/osm4scala/osmblock/denses/7875/nodes_coord_list.txt"))
+          .getLines()
+
       DenseNodesIterator(strTable, osmosisDense).foreach(x => {
-        val latAndLon = expectedCoordIter next() split (",")
+        val latAndLon = expectedCoordIter.next().split(",")
         x.latitude shouldBe latAndLon(0).toDouble +-  0.01
         x.longitude shouldBe latAndLon(1).toDouble +-  0.01
       })
